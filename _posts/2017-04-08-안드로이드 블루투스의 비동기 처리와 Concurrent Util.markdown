@@ -5,9 +5,7 @@ date:   2017-04-8 16:38:34 +0900
 post_author : Ted
 categories: blog
 ---
-안드로이드 블루투스의 비동기 처리와 Concurrent Util
-
-안드로이드 블루투스 통신은 직토워크의 초기부터 개발팀이 공을 많이 들인 부분이다. 아마 대부분의 Bluetooth Low Energy(이하 BLE)를 사용하는 디바이스의 애플리케이션을 제작하는 회사는 마찬 가지라고 생각한다. 일반적으로 GATT Profile을 이용하여 Characteristic을 만들어서 읽거나, 마치 UART 통신처럼 프로토콜을 제작하여서 데이터 통신을 하는 경우가 대부분이다.
+안드로이드 블루투스 통신은 직토워크의 초기부터 개발팀이 공을 많이 들인 부분이다. 대부분의 Bluetooth Low Energy(이하 BLE)를 사용하는 디바이스의 애플리케이션을 제작하는 회사는 마찬 가지라고 생각한다. 일반적으로 GATT Profile을 이용하여 Characteristic을 만들어서 읽거나, 마치 UART 통신처럼 프로토콜을 제작하여서 데이터 통신을 하는 경우가 대부분이다.
 
 이번 글에서는 BLE의 하드웨어 통신보다 Android Framework에서 효율적으로 통신보다 Bluetooth 어댑터관리와 효율적인 이벤트를 처리하는 방법에 대해서 이야기하려고 한다(iPhone의 경우 디바이스의 다양성이 적어서 훨씬 문제가 덜 하다).
 
@@ -15,32 +13,35 @@ categories: blog
 
 Daisy Chain형태의 구조를 개선하고 각 모듈(통신 프로토콜)의 재사용을 위해서 처음 도입했던 것이 [Java의 Concurrent Util](https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/package-summary.html)이다. 생각보다 편하게 쓸 수 있는 클래스를 많이 제공해 주고 있다. 인터넷에 [여러가지 예제](http://tutorials.jenkov.com/java-util-concurrent/index.html)가 있다.
 
-## 초기화 문제
-BLE가 초기화가 되려면 시스템마다 매우 다르지만 직토워크는 총 8개의 단계를 거쳐서 초기화를 한다.
-1. BluetoothManager의 획득
+#### 초기화 문제
+BLE가 초기화가 되려면 시스템마다 매우 다르지만 직토워크는 총 8개의 단계를 거쳐서 초기화를 한다. Gatt Profile을 이용하여 통신한다면 Step 7까지는 같을 것이고, 데이터를 받아오는 방식이 characteristic을 read하거나 혹은 notify를 통해 받는 방법에서 Step 8이 차이가 날 것이다.
+
+* Step 1. BluetoothManager의 획득
 {% highlight java %}
         bluetoothManager = (android.bluetooth.BluetoothManager) MainApplication.getApplication().getSystemService(Context.BLUETOOTH_SERVICE);
 {% endhighlight %}
 
-2. BluetoothAdapater의 획득
+* Step 2. BluetoothAdapater의 획득
 {% highlight java %}
         bluetoothAdapter = bluetoothManager.getAdaperter();
 {% endhighlight %}
 
-3. Device의 획득
+* Step 3. Device의 획득
 {% highlight java %}
 		device = bluetoothAdapter.getRemoteDevice(MACAddress);
 {% endhighlight %}
 
-위 세부분은 시스템에서 받아오는 부분이기 때문에 함수들이 Synchronous하게 호출 되지만, 이후 부터는 실제 Bluetooth를 통해서 디바이스(직토워크)와 통신하는 부분이기 때문에 대부분 asynchronous하게 실행된다.
+위 세부분은 시스템에서 받아오는 부분이기 때문에 함수들이 Synchronous하게 호출 되지만, 이후 부터는 실제 Bluetooth를 통해서 디바이스(직토워크)와 통신하는 부분이기 때문에 대부분 asynchronous하게 실행된다. 실제 코드에선 각 부분이 null 값에 대한 이벤트를 처리해야 한다.
 
-4.	디바이스를 스캔
-5.	connectGatt
-6.	원하는 몇 개의 Service를 Discover
-7.	원하는 몇 개의 Characteristic을 Discover
-8.	서비스의 Descriptor를 notify로 변경
+* Step 4.	BLE 스캔
+* Step 5.	connectGatt
+* Step 6.	원하는 몇 개의 Service를 Discover
+* Step 7.	원하는 몇 개의 Characteristic을 Discover
+* Step 8.	서비스의 Descriptor를 notify로 변경
 
-위의 4개의 이벤트가 발생한 후에 Write를 시작할 수 있다. 기본적으로 모든 함수들이 callback형식으로 framework에서 제공이 되기 때문에 daisy chain으로 구현이 가능하다(제발 안그랬으면 한다). 혹은 Semaphore를 이용하면 thread를 block하는 과정을 구현할 수 있지만 계속 별도의 Semaphore를 생성 해주어야하는 문제와 Semaphore를 wait하는 과정에서 BLE가 동작이 원할하지 않는 현상을 발견하였다(BLE는 Framework에서 처리하여서 오는 이벤트이기 때문에 비동기 혹은 background 모듈 사용시 항상 시행착오가 많았다). Concurrent Util에서 CountdownLatch를 이용하여 간단하게 해결하였고, BLE 동작성 역시 문제가 없었다.
+위의 4개의 이벤트가 발생한 후에 Write를 시작할 수 있다. 기본적으로 모든 함수들이 callback형식으로 framework에서 제공이 되기 때문에 daisy chain으로 구현이 가능하다(제발 안그랬으면 한다). 혹은 Semaphore를 이용하면 thread를 block하는 과정을 구현할 수 있지만 계속 별도의 Semaphore를 생성 해주어야하는 문제와 Semaphore를 wait하는 과정에서 BLE가 동작이 원할하지 않는 현상을 발견하였다(BLE는 Framework에서 처리하여서 오는 이벤트이기 때문에 비동기 혹은 background 모듈 사용시 항상 시행착오가 많았다).
+
+여러모듈 부터 다른 방법을 많이 시도하였지만, 프로그램적으로는 동작하나 Bluetooth이벤트가 정상적으로 처리가 되지 않는 경우가 많았다. 그 중 Concurrent Util에서 CountdownLatch를 이용하여 간단하게 해결하였고, BLE 동작성 역시 문제가 없었다.
 
 {% highlight java %}
 initializeLatch = CountDownLatch(4);
@@ -51,7 +52,7 @@ initializeLatch = CountDownLatch(4);
 initializeLatch.countDown();
 {% endhighlight %}
 
-위 코드를 추가하여 15초이내에 4개의 이벤트가 모두 발생하면 초기화가 완료되고 그렇지 않으면 초기화가 실패하는 루틴을 생성하였다.
+위 코드를 추가하여 15초이내에 4개의 이벤트가 모두 발생하면 초기화가 완료되고 그렇지 않으면 초기화가 실패하는 루틴을 생성하였다. 항상 같은 순서로 이벤트가 발생하지 않기 때문에 countdownlatch는 순서에 상관없이 countdown만 일어나면 
 
 {% highlight java %}
 initializeLatch.await(15, TimeUnit.SECONDS);
@@ -59,7 +60,7 @@ initializeLatch.await(15, TimeUnit.SECONDS);
 
 그 결과, 원할하게 초기화 프로세스가 진행되었고, 4스텝중에 한 곳에서라도 문제가 생기면 15초후에는 에러 처리를 한 곳에서 할 수 있게 되었다.
 
-## 여러 프로토콜의 실행
+#### 여러 프로토콜의 실행
 
 그 다음 해결해야 하는 문제는 이러한 쓰고/읽는 프로토콜을 serial하게 실행시킬 수 있는 manager가 필요하였다.
 
