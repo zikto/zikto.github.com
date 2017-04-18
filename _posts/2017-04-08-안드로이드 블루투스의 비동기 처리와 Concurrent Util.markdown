@@ -5,7 +5,9 @@ date:   2017-04-8 16:38:34 +0900
 post_author : Ted
 categories: blog
 ---
-안드로이드 블루투스 통신은 직토워크의 초기부터 개발팀이 공을 많이 들인 부분이다. 대부분의 Bluetooth Low Energy(이하 BLE)를 사용하는 디바이스의 애플리케이션을 제작하는 회사는 마찬 가지라고 생각한다. 일반적으로 GATT Profile을 이용하여 Characteristic을 만들어서 읽거나, 마치 UART 통신처럼 프로토콜을 제작하여서 데이터 통신을 하는 경우가 대부분이다.
+안드로이드 블루투스 통신은 직토워크의 초기부터 개발팀이 공을 많이 들인 부분이다. 대부분의 Bluetooth Low Energy(이하 BLE)를 사용하는 디바이스의 애플리케이션을 제작할 때 iOS보다는 Android에 힘을 많이 쏟기 마련이다. 워낙 다양한 Chipset과 버젼들이 쓰여지고 있고 제조사마다 표준을 지키지 않는 경우도 많지만, 그렇다고 스마트폰 제조사를 탓 할 수 없기때문에 유연한 통신 방식을 애플리케이션 레벨에서 제공해야 한다.
+
+BLE로 GATT Profile을 이용하여 하나느 일반적으로 GATT Profile을 이용하여 Characteristic을 만들어서 읽거나, 마치 UART 통신처럼  프로토콜을 제작하여서 데이터 통신을 하는 경우가 대부분이다.
 
 이번 글에서는 BLE의 하드웨어 통신보다 Android Framework에서 효율적으로 통신보다 Bluetooth 어댑터관리와 효율적인 이벤트를 처리하는 방법에 대해서 이야기하려고 한다(iPhone의 경우 디바이스의 다양성이 적어서 훨씬 문제가 덜 하다).
 
@@ -18,7 +20,7 @@ BLE가 초기화가 되려면 시스템마다 매우 다르지만 직토워크�
 
 * Step 1. BluetoothManager의 획득
 {% highlight java %}
-        bluetoothManager = (android.bluetooth.BluetoothManager) MainApplication.getApplication().getSystemService(Context.BLUETOOTH_SERVICE);
+        bluetoothManager = (android.bluetooth.BluetoothManager) 			MainApplication.getApplication().getSystemService(Context.BLUETOOTH_SERVICE);
 {% endhighlight %}
 
 * Step 2. BluetoothAdapater의 획득
