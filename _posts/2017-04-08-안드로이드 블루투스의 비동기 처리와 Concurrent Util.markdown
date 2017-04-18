@@ -94,7 +94,7 @@ syncWalkPhaseTwoAsyncTask.execute();
 
 ExecutorService의 SingleThreadExecutor를 이용하여 추가되는 Runnable을 순차적으로 실행할 수 있게 하였고(마치 queue와 같다), 각 runnbable에서 얻게되는 결과값을 AsyncTask에서 Future통해 받은 후 UI에서 업데이트 할 수 있게 하였다.
 
-![그림 1. ExecutorService와 AsyncTask의 관계](./img/2017-04-08-img1.png)
+![그림 1. ExecutorService와 AsyncTask의 관계]({{ site.url }}/img/2017-04-08-img1.png)
 
 
 항상 async의 문제는 handler나 asynctask등을 통하여서 thread에 접근하여서 UI를 그리는 권한이 있는 thread에 데이터를 전달해주는 부분이 문제였다. Handler를 쓰면 간단하게 해결되는 경우가 많지만 메시지가 남발되어 제대로 관리하지 않으면 재사용이 불가능한 코드가 되버리기 쉽상이다.
