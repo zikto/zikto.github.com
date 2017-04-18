@@ -16,7 +16,9 @@ BLE로 GATT Profile을 이용하여 하나느 일반적으로 GATT Profile을 �
 Daisy Chain형태의 구조를 개선하고 각 모듈(통신 프로토콜)의 재사용을 위해서 처음 도입했던 것이 [Java의 Concurrent Util](https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/package-summary.html)이다. 생각보다 편하게 쓸 수 있는 클래스를 많이 제공해 주고 있다. 인터넷에 [여러가지 예제](http://tutorials.jenkov.com/java-util-concurrent/index.html)가 있다.
 
 #### 초기화 문제
-BLE가 초기화가 되려면 시스템마다 매우 다르지만 직토워크는 총 8개의 단계를 거쳐서 초기화를 한다. Gatt Profile을 이용하여 통신한다면 Step 7까지는 같을 것이고, 데이터를 받아오는 방식이 characteristic을 read하거나 혹은 notify를 통해 받는 방법에서 Step 8이 차이가 날 것이다.
+BLE가 초기화가 되려면 시스템마다 매우 다르지만 직토워크는 총 8개의 단계를 거쳐서 초기화를 한다. Android의 대부분의 예제등은 실패이후에 다시 재시도 하는 방법에 대한 부분들이 명확하게 정의되어 있지 않아서, 이 부분을 정확하게 처리 하지 않으면 애플리케이션을 종료하고 실행해야 하는 경우가 생기고는 한다. 휴대폰을 재시작하거나 블루투스를 off/on해야 해결되는 경우가 아닌, 앱을 재시작해서 블루투스 통신이 되는 경우는 hardware(혹은 framework)이슈가 아닌 software이슈기 때문에 반듯이 해결하고 나가야하는 문제이다.
+
+GATT Profile을 이용하여 통신한다면 Step 7까지는 같을 것이고, 데이터를 받아오는 방식이 characteristic을 read하거나 혹은 notify를 통해 받는 방법에서 Step 8이 차이가 날 것이다.
 
 * Step 1. BluetoothManager의 획득
 {% highlight java %}
@@ -33,7 +35,7 @@ BLE가 초기화가 되려면 시스템마다 매우 다르지만 직토워크�
 		device = bluetoothAdapter.getRemoteDevice(MACAddress);
 {% endhighlight %}
 
-위 세부분은 시스템에서 받아오는 부분이기 때문에 함수들이 Synchronous하게 호출 되지만, 이후 부터는 실제 Bluetooth를 통해서 디바이스(직토워크)와 통신하는 부분이기 때문에 대부분 asynchronous하게 실행된다. 실제 코드에선 각 부분이 null 값에 대한 이벤트를 처리해야 한다.
+위 세부분은 시스템에서 받아오는 부분이기 때문에 함수들이 Synchronous하게 호출 되기때문(실행결과가 바로 return)에 큰 문제가 없다. 하지만 이후 부터는 실제 Bluetooth를 통해서 디바이스(직토워크)와 통신하는 부분이기 때문에 대부분 asynchronous하게 실행된다. 실제 코드에선 각 부분이 null 값에 대한 이벤트를 처리해야 한다.
 
 * Step 4.	BLE 스캔
 * Step 5.	connectGatt
@@ -90,10 +92,13 @@ SyncWalkPhaseTwoAsyncTask syncWalkPhaseTwoAsyncTask = new SyncWalkPhaseTwoAsyncT
 syncWalkPhaseTwoAsyncTask.execute();
 {% endhighlight %}
 
-ExecutorService의 SingleThreadExecutor를 이용하여 추가되는 Runnable을 순차적으로 실행할 수 있게 하였고, 각 runnbable에서 얻게되는 결과값을 AsyncTask에서 Future통해 받은 후 UI에서 업데이트 할 수 있게 하였다.
+ExecutorService의 SingleThreadExecutor를 이용하여 추가되는 Runnable을 순차적으로 실행할 수 있게 하였고(마치 queue와 같다), 각 runnbable에서 얻게되는 결과값을 AsyncTask에서 Future통해 받은 후 UI에서 업데이트 할 수 있게 하였다.
+
+![그림 1. ExecutorService와 AsyncTask의 관계](./img/2017-04-08-img1.png)
+
 
 항상 async의 문제는 handler나 asynctask등을 통하여서 thread에 접근하여서 UI를 그리는 권한이 있는 thread에 데이터를 전달해주는 부분이 문제였다. Handler를 쓰면 간단하게 해결되는 경우가 많지만 메시지가 남발되어 제대로 관리하지 않으면 재사용이 불가능한 코드가 되버리기 쉽상이다.
 
-Web 통신과 같이 bluetooth통신 역시 Program자체보다 Environment에 의해서 이벤트가 발생하고 그것에 대한 concurrency control을 얼마나 효율적으로 하느냐가 관건이다. 조금 우겨 넣는 것 같지만, 이러한 “Reactive”한 이벤트처리에는 ReactiveX를 이용해보는 것을 어떨까.
+Web 통신과 같이 bluetooth통신 역시 Program자체보다 Environment에 의해서 이벤트가 발생하고 그것에 대한 concurrency control을 얼마나 효율적으로 하느냐가 관건이다. 조금 우겨 넣는 것 같지만, 이러한 “Reactive”한 이벤트처리에는 ReactiveX를 이용해보는 것을 시도해보는것도 좋은 refactoring이 될것 같다.
 
 [zikto-page]: https://www.zikto.com
