@@ -1,0 +1,79 @@
+---
+layout: post
+title:  "통신사 개인인증 고분 분투기"
+date:   2017-03-10 16:38:34 +0900
+post_author : Ted
+categories: jekyll update
+---
+
+## CI ?
+어느날 갑자기 CI 를 아느냐고 대표님이 물어보셨다. 
+드디어 우리팀도 DevOps 를 하는것인가? 
+자신있게 (지속적 통합? Continuous Integration) 라고 생각하고 잘 안다고 대답했다. 
+
+하지만.... CI 는
+
+>CI (Connecting Information) : 연계정보, 서비스 연계를 위해 본인확인기관에서 부여하는 개인식별정보 <br>
+DI (duplication information)  : 사이트내 중복가입 확인정보 입니다 
+
+라는 한국 통신사 개인 인증 시스템 이였다!
+
+
+![매일 인증하며 욕했던 인증 화면]({{ site.url }}/img/ci1.jpg)
+*매일 인증하며 욕했던 인증 화면*
+
+## 현실은?
+적당히 서버에 전화번호 넘기고 주민등록 번호 넘기면 끝나겠지 생각하며 하루면 하겠지 생각했다! <br>
+그러던중 제공 업체에서 라이브러리가 넘어왔다!
+
+![깨져있는인코딩]({{ site.url }}/img/ci2.png) 
+
+깨져 있는 인코딩과 자바라이브러리! :trollface: 물론 PHP, ASP 제공!
+
+현재 개발팀은 매우 소규모로 구축되어있고 모든 개발을 자바스크립트로 하고 있었다! 그러던중에 자바라니! <br>
+나름 풍부한 스프링 개발 경험은 가진 저는 자신있게 [start.spring.io](http://start.spring.io) 를 켜고 설렌 마음:grinning:  으로 세팅을 하던 와중! <br>
+
+나는 IOS, Android, API 서버 등등을 배포해야한다.. :rage1: :rage2: :rage3: :rage4: <br>
+혹을 하나더 붙일 수는 없다
+
+## Lambda
+개인인증을 하기 위해서는 2개의 API 면 충분하다.
+- 전화번호, 주민등록 8글자(생년원일 + 성별), 통신사 를 입력해 인증 시도
+- SMS 로 온 인증번호 입력후 CI DI 값 리턴
+
+2개의 API 를 만들기 위해 Java 서버를 두는것은 너무나 큰 비효율이다. 
+물론 프로토콜을 분석해 각 언어 라이브러리를 만들수는 있겠지만 내가 할일은 아니다 :angry:
+<br>
+
+이럴때 사용하라고 만든것이 [AWS Lambda](https://aws.amazon.com/ko/lambda/) 이다. <br> 서버없는 백엔드를 구축하여 API 요청등을 처리 할 수 있고 여러 데이터 센터에 걸쳐 가용성이 높은 구성에서 실행되는 강력한 웹 어플리케이션을 구축 할 수 있다.
+글쓰는 기준으로 C#, Node, Python, JAVA8 이 가능하다!
+
+![Lambda Functions]({{ site.url }}/img/ci4.png)
+- CI 에 필요한 2개 함수 정의 
+
+Lambda 를 실행 시키기 위한 Trigger 는 매우 많은 것이 가능하다.
+
+![Lambda Triggers]({{ site.url }}/img/ci5.png)
+
+우리 서비스는 Node 로 구성된 API 서버에서 API Gateway 를 통해 Lambda 를 실행 시키고 결과를 리턴받아 API 서버에 데이터를 저장하는 방식으로 되어있다.
+
+자세한 Lambda 대한 내용은 여러 블로그를 통해 확인 할 수 있다.
+- [Outsider Blog](https://blog.outsider.ne.kr/1205n)
+
+## VPC
+개인 정보 인증을 하기 위해 자사의 서버와 Provider 에 특정 서버간에 통신을 진행한다. <br>
+서버 인증을 위해 ACL 를 사용하며 특정 등록된 IP 에서만 요청이 가능하도록 설계 되어 있다. 기본적으로 Lambda 는 임의의 서버에서 실행이 되므로 고정 IP 를 가지고 있지 않다.
+
+AWS 에서 가상 네트워크를 구축하기 위해서 제공 되는 서비스([VPC](http://docs.aws.amazon.com/ko_kr/AmazonVPC/latest/UserGuide/VPC_Introduction.html))가 있다.
+Lambda 에서도 VPC 를 통해 고정 IP 할당이 가능하도록 기능을 제공해 주고 있다.
+
+- [Lambda VPC 적용](http://techblog.financialengines.com/2016/09/26/aws-lambdas-with-a-static-outgoing-ip/)
+
+VPC 를 사용하기 위해서는 Subnet, Routetable 등 여러 네트워크 지식을 알고 있어야 한다.
+계속.!
+
+## 결론
+AWS 에서 Lambda 가 출시되고 사용할 경우가 많지는 않을것 같았다. 물론 모든 API 를 Lambda 로 구축하기는 건 좋지 않다고 생각한다.
+물론 [APEX](https://github.com/apex/apex) 같은 좋은 프로젝트가 있지만, Lambda 를 통해 복잡한 비지니스를 처리하는 API 를 만드는게 
+올바른 설계는 아니라고 생각한다!
+자주 변경되지 않는 특정 기능만 수행하는 API 를 Lambda 를 통해 구축하는건 올바른 시도라고 생각된다! 
