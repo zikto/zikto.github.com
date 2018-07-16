@@ -1,7 +1,6 @@
 all:
 	jekyll build
-	mkdir -p _site/api
-	rsync -avr ../slate/build/ _site/api/
+	rsync -avr ../slate/build/ ./api
 	jekyll serve 
 
 clean:
