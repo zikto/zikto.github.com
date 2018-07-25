@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Senior Software Developer"
+title:  "Senior Backend Developer"
 date:   2018-07-23 16:38:34 +0900
 post_author : Thomas
 categories: jekyll update
