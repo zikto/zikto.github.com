@@ -27,4 +27,5 @@ categories: jekyll update
 - 서버 아키텍처에 대한 이해와 대규모 서비스 시스템 설계 및 운영 경험자
 
 
-Please send your resume to career at zikto.com
+이력서는 PDF형태로 아래 주소로 제출 부탁드립니다.
+career at zikto.com

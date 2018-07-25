@@ -30,4 +30,6 @@ categories: jekyll update
 - CSS/Styling의 끈을 놓지않고 꾸준히 학습하시는 분
 - Phabricator/Jira 등의 툴로 작업관리하는데 거부감 없는 분
 
-Please send your resume to career at zikto.com
+
+이력서는 PDF형태로 아래 주소로 제출 부탁드립니다.
+career at zikto.com
