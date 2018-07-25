@@ -16,9 +16,10 @@ categories: jekyll update
 
 
 
-# [시니어 프론트엔드 개발자]({{ site.url }}/_post/wef.html)
+# [시니어 프론트엔드 개발자](https:/bit.ly/2v2qTbZ)
 
-# [시니어 백앤드 개발자]({{ site.url }}/_post/wef.html)
+[시니어 백앤드 개발자](https:/bit.ly/2v2qTbZ)
+<!-- # [시니어 백앤드 개발자]({{ site.url }}/_post/wef.html) -->
 
 ![채용공고]({{ site.url }}/img/zikto_recruit_post.jpg)
 
